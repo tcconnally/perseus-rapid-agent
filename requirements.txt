@@ -1,0 +1,13 @@
+# Perseus Memory Agent — dependencies
+# Minimum for standalone use with Engram-rs backend.
+# For Elastic backend, Google Cloud Agent Builder handles the MCP connection.
+
+# Core (no heavy deps needed — Agent Builder provides Gemini + MCP)
+pydantic>=2.0
+python-dotenv>=1.0
+
+# Elastic backend (only needed for standalone Elasticsearch access)
+# elasticsearch>=8.0
+
+# Async support
+anyio>=4.0
