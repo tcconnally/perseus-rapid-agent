@@ -33,12 +33,16 @@
   }
   .screen {
     padding: 28px 32px;
-    min-height: 520px;
+    height: 380px;
+    overflow-y: auto;
     font-size: 14px;
     line-height: 1.75;
     color: #c9d1d9;
     position: relative;
   }
+  .screen::-webkit-scrollbar { width: 6px; }
+  .screen::-webkit-scrollbar-track { background: #0d1117; }
+  .screen::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
   .line { margin-bottom: 6px; opacity: 0; transition: opacity 0.15s; }
   .line.visible { opacity: 1; }
   .line.user { color: #58a6ff; }
@@ -89,7 +93,10 @@ function addLine(text, cls, delay) {
   div.className = 'line ' + cls;
   div.innerHTML = text;
   screen.appendChild(div);
-  setTimeout(() => div.classList.add('visible'), delay || 50);
+  setTimeout(() => {
+    div.classList.add('visible');
+    screen.scrollTo({ top: screen.scrollHeight, behavior: 'smooth' });
+  }, delay || 50);
 }
 
 const TOTAL_DURATION = 155; // seconds
