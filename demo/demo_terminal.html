@@ -2,230 +2,141 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Perseus Memory Agent Demo</title>
+<title>Perseus Memory Agent — Google Cloud × Elastic Demo</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0a0a0f;
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
-    display: flex; justify-content: center; align-items: center;
-    min-height: 100vh;
-  }
-  .terminal {
-    width: 1080px; max-width: 100%;
-    background: #0d1117;
-    border-radius: 12px;
-    border: 1px solid #30363d;
-    overflow: hidden;
-    box-shadow: 0 0 60px rgba(34, 211, 238, 0.08);
-  }
-  .titlebar {
-    background: #161b22;
-    padding: 12px 20px;
-    display: flex; align-items: center; gap: 10px;
-    border-bottom: 1px solid #30363d;
-  }
+  body { background: #0d1117; font-family: 'JetBrains Mono', 'Fira Code', monospace; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px; }
+  .terminal { width: 1100px; max-width: 100%; background: #161b22; border-radius: 8px; border: 1px solid #30363d; overflow: hidden; box-shadow: 0 0 40px rgba(88, 166, 255, 0.1); }
+  .titlebar { background: #21262d; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #30363d; }
   .dot { width: 12px; height: 12px; border-radius: 50%; }
   .dot.red { background: #ff5f56; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #27c93f; }
-  .titlebar-text {
-    flex: 1; color: #8b949e; font-size: 13px; text-align: center;
-  }
-  .screen {
-    padding: 28px 32px;
-    height: 380px;
-    overflow-y: auto;
-    font-size: 14px;
-    line-height: 1.75;
-    color: #c9d1d9;
-    position: relative;
-  }
+  .titlebar-text { color: #8b949e; font-size: 12px; margin-left: 12px; }
+  .screen { height: 400px; padding: 16px 20px; overflow-y: auto; font-size: 13px; line-height: 1.65; scroll-behavior: smooth; }
   .screen::-webkit-scrollbar { width: 6px; }
   .screen::-webkit-scrollbar-track { background: #0d1117; }
   .screen::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
-  .line { margin-bottom: 6px; opacity: 0; transition: opacity 0.15s; }
-  .line.visible { opacity: 1; }
-  .line.user { color: #58a6ff; }
-  .line.user::before { content: '▸ '; color: #58a6ff; }
-  .line.agent { color: #7ee787; }
-  .line.agent::before { content: '● '; color: #7ee787; }
-  .line.system { color: #8b949e; font-size: 13px; }
-  .line.system::before { content: '◆ '; color: #d2a8ff; }
-  .line.divider { color: #30363d; text-align: center; font-size: 12px; margin: 16px 0; }
-  .line.highlight { color: #d2a8ff; }
-  .cursor { display: inline-block; width: 8px; height: 16px; background: #58a6ff; animation: blink 0.8s infinite; vertical-align: middle; margin-left: 2px; }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-  .badge {
-    display: inline-block; padding: 2px 8px; border-radius: 4px;
-    font-size: 11px; font-weight: 600; margin-right: 4px;
-  }
-  .badge.store { background: rgba(167, 139, 250, 0.2); color: #d2a8ff; border: 1px solid rgba(167,139,250,0.3); }
-  .badge.recall { background: rgba(52, 211, 153, 0.2); color: #7ee787; border: 1px solid rgba(52,211,153,0.3); }
-  .badge.insight { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
-  .badge.decision { background: rgba(251, 113, 133, 0.2); color: #fb7185; border: 1px solid rgba(251,113,133,0.3); }
-  .timeline-bar {
-    position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
-    background: #30363d;
-  }
-  .timeline-fill {
-    height: 100%; background: linear-gradient(90deg, #22d3ee, #34d399, #a78bfa);
-    transition: width 0.3s linear;
-  }
+  .line { margin: 2px 0; opacity: 0; animation: fadeIn 0.3s forwards; white-space: pre-wrap; word-break: break-word; }
+  @keyframes fadeIn { to { opacity: 1; } }
+  .label { color: #8b949e; font-size: 11px; margin: 8px 0 4px; border-top: 1px solid #21262d; padding-top: 8px; }
+  .user { color: #58a6ff; } .user::before { content: '▸ '; }
+  .agent { color: #3fb950; } .agent::before { content: '● '; }
+  .system { color: #bc8cff; } .system::before { content: '◆ '; }
+  .memory { color: #d2991d; } .memory::before { content: '◈ '; }
+  .elastic { color: #00bfb3; } .elastic::before { content: '⬡ '; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 4px; }
+  .badge.store { background: #1f3a1f; color: #3fb950; }
+  .badge.recall { background: #1a2e3a; color: #58a6ff; }
+  .badge.search { background: #1a3a3a; color: #00bfb3; }
+  .badge.insight { background: #2e1a3a; color: #bc8cff; }
+  .badge.swap { background: #3a2a1a; color: #d2991d; }
+  .highlight { color: #f0883e; font-weight: bold; }
 </style>
 </head>
 <body>
 <div class="terminal">
   <div class="titlebar">
     <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
-    <span class="titlebar-text">perseus-memory-agent — demo — Google Cloud Rapid Agent Hackathon 2026</span>
+    <span class="titlebar-text">perseus-memory-agent — demo</span>
   </div>
-  <div class="screen" id="screen">
-    <div class="timeline-bar"><div class="timeline-fill" id="progress" style="width: 0%"></div></div>
-  </div>
+  <div class="screen" id="screen"></div>
 </div>
 
 <script>
 const screen = document.getElementById('screen');
-const progress = document.getElementById('progress');
+const SCENES = [
+  // Scene 1: Project Introduction + Elastic Setup
+  { delay: 0, lines: [
+    ['label', '── Session 1: Project Onboarding ──'],
+    ['system', 'Perseus Memory Agent · Google Cloud Agent Builder · Elastic Partner Track'],
+    ['elastic', 'Elastic Cloud connected: hybrid search (ELSER + BM25) · index: perseus-agent-memory'],
+    ['user', 'I\'m building a microservices platform. Stack: Python, FastAPI, PostgreSQL, Redis, K8s. We use async/await, type hints, pytest, and Black. Architecture is microservices with API gateway and RabbitMQ.'],
+    ['agent', 'Got it. Let me store your full project context in Elastic.'],
+    ['system', '<span class="badge store">store</span> Stack: Python 3.12, FastAPI, PostgreSQL, Redis, Docker, K8s'],
+    ['system', '<span class="badge store">store</span> Convention: async/await for all I/O · type hints on public fns'],
+    ['system', '<span class="badge store">store</span> Convention: pytest + pytest-cov · Black (100 char line length)'],
+    ['system', '<span class="badge store">store</span> Architecture: Microservices + API gateway + RabbitMQ (event-driven)'],
+    ['elastic', 'Elasticsearch: 5 documents indexed · <span class="badge search">hybrid</span> ELSER semantic + BM25 keyword'],
+    ['user', 'What conventions should I follow when I start coding today?'],
+    ['agent', 'Based on your project context stored in Elastic:'],
+    ['agent', '• <span class="highlight">async/await</span> for all I/O operations'],
+    ['agent', '• <span class="highlight">Type hints</span> on all public functions'],
+    ['agent', '• <span class="highlight">pytest</span> with pytest-cov for testing coverage'],
+    ['agent', '• <span class="highlight">Black</span> formatter, 100-character line length'],
+    ['system', 'Session 1 complete. 5 memories stored in Elastic.'],
+  ]},
+  // Scene 2: Decision + Recall
+  { delay: 2000, lines: [
+    ['label', ''],
+    ['label', '── Session 2: Next Day — Elastic Hybrid Recall ──'],
+    ['system', 'Starting session... <span class="badge recall">recall</span> Loading context from Elastic...'],
+    ['elastic', '<span class="badge search">hybrid</span> ELSER semantic search: "tech stack conventions" → 3 results'],
+    ['elastic', '<span class="badge search">hybrid</span> BM25 keyword match: "PostgreSQL Python" → 2 results'],
+    ['memory', 'Recalled: [fact] Stack: Python, FastAPI, PostgreSQL, Redis, K8s (1d ago)'],
+    ['memory', 'Recalled: [preference] pytest, type hints, Black, async/await (1d ago)'],
+    ['memory', 'Recalled: [fact] Architecture: Microservices + API gateway + RabbitMQ (1d ago)'],
+    ['user', 'We need semantic search. Should I use Pinecone or pgvector?'],
+    ['agent', 'Since you already have <span class="highlight">PostgreSQL</span> in your stack (recalled from Elastic), pgvector avoids operational complexity and vendor lock-in. Let me log this decision.'],
+    ['system', '<span class="badge store">store</span> Decision: pgvector over Pinecone · rationale: PostgreSQL already in stack, simpler ops'],
+    ['user', 'What endpoint structure should I use?'],
+    ['agent', 'Given your <span class="highlight">FastAPI</span> + <span class="highlight">async/await</span> conventions and <span class="highlight">pgvector</span>: POST /search (semantic), GET /search/index (health), asyncpg for connection pooling.'],
+    ['system', 'Session 2 complete. 3 new memories. Elastic hybrid search retrieved exact context.'],
+  ]},
+  // Scene 3: Knowledge Compounding + Backend Swap
+  { delay: 2000, lines: [
+    ['label', ''],
+    ['label', '── Session 3: One Week Later — Knowledge Compounds ──'],
+    ['system', 'Starting session... <span class="badge recall">recall</span> Elastic: 11 memories across 4 categories'],
+    ['memory', 'Recalled: stack (7d), conventions (7d), pgvector decision (6d), architecture (7d)'],
+    ['user', 'Onboard a new developer. What should they know?'],
+    ['agent', 'Here\'s everything I know across 3 sessions:'],
+    ['agent', ''],
+    ['agent', '<span class="highlight">Stack:</span> Python 3.12, FastAPI, PostgreSQL + pgvector, Redis, Docker, K8s'],
+    ['agent', '<span class="highlight">Architecture:</span> Microservices, API gateway, event-driven (RabbitMQ)'],
+    ['agent', '<span class="highlight">Conventions:</span> async/await, type hints, pytest, Black (100 chars)'],
+    ['agent', '<span class="highlight">Key Decision:</span> pgvector over Pinecone — simpler ops, no vendor lock-in'],
+    ['agent', ''],
+    ['agent', 'This knowledge compounds across sessions. Every time we talk, I get smarter about your codebase.'],
+    ['system', '<span class="badge insight">insight</span> Compound: Python+PostgreSQL stack is consistent — no conflicting tech choices'],
+    ['system', '<span class="badge insight">insight</span> Compound: All API decisions favor simplicity (pgvector, REST, async)'],
+    ['label', ''],
+    ['label', '── Backend Swap: Elastic → Engram-rs ──'],
+    ['system', '<span class="badge swap">swap</span> MEMORY_BACKEND=elastic → MEMORY_BACKEND=engram'],
+    ['system', 'Same MemoryBackend interface. Same 13 memories. Zero code changes.'],
+    ['elastic', 'Elastic Cloud (managed, hybrid ELSER+BM25) → Engram-rs (self-hosted, MIT, SQLite+FTS5)'],
+    ['agent', 'Identical recall quality. Running entirely on your hardware. <span class="highlight">MIT licensed, no API keys, no cloud.</span>'],
+  ]},
+  // Scene 4: Closing
+  { delay: 2000, lines: [
+    ['label', ''],
+    ['label', '── Perseus Memory Agent — Summary ──'],
+    ['agent', '✓ <span class="highlight">Persistent memory</span> — agent remembers across sessions · Elastic hybrid search'],
+    ['agent', '✓ <span class="highlight">Cross-session compounding</span> — gets smarter over time'],
+    ['agent', '✓ <span class="highlight">Swappable backends</span> — Elastic Cloud (managed) ↔ Engram-rs (self-hosted, MIT)'],
+    ['agent', '✓ <span class="highlight">Google Cloud</span> Agent Builder + Gemini 3 Pro'],
+    ['agent', '✓ <span class="highlight">Elastic</span> Partner Track — ELSER + BM25 hybrid search via MCP'],
+    ['agent', ''],
+    ['agent', '<span class="highlight">github.com/tcconnally/perseus-rapid-agent</span>  ·  MIT License'],
+    ['agent', 'Google Cloud Rapid Agent Hackathon 2026 · Elastic Partner Track'],
+  ]},
+];
 
-function addLine(text, cls, delay) {
+let sceneI = 0, lineI = 0, done = false;
+function play() {
+  if (done) return;
+  if (sceneI >= SCENES.length) { done = true; return; }
+  const scene = SCENES[sceneI];
+  if (lineI >= scene.lines.length) { sceneI++; lineI = 0; setTimeout(play, sceneI < SCENES.length ? SCENES[sceneI].delay : 0); return; }
+  const [type, text] = scene.lines[lineI];
   const div = document.createElement('div');
-  div.className = 'line ' + cls;
+  div.className = `line ${type}`;
   div.innerHTML = text;
   screen.appendChild(div);
-  setTimeout(() => {
-    div.classList.add('visible');
-    screen.scrollTo({ top: screen.scrollHeight, behavior: 'smooth' });
-  }, delay || 50);
+  screen.scrollTo({top: screen.scrollHeight, behavior: 'smooth'});
+  lineI++;
+  const delay = type === 'label' ? 400 : type === 'system' ? 320 : type === 'elastic' ? 350 : type === 'memory' ? 280 : type === 'agent' ? 600 : type === 'user' ? 500 : 400;
+  setTimeout(play, delay);
 }
-
-const TOTAL_DURATION = 155; // seconds
-const START_DELAY = 2;
-
-// === SESSION 1: Teaching the Agent (0:02 - 0:38) ===
-setTimeout(() => {
-  addLine('═══ Session 1: Teaching the Agent ═══', 'divider');
-}, START_DELAY * 1000);
-
-setTimeout(() => addLine('I\'m working on hermes-agent. Python 3.12, FastAPI, PostgreSQL with pgvector.', 'user'), 3000);
-setTimeout(() => addLine('We use Black formatting, async/await everywhere, and pytest-asyncio.', 'user'), 5000);
-
-setTimeout(() => {
-  addLine('<span class="badge store">store</span> Stored 5 facts to memory via Elastic → perseus-agent-memory', 'agent');
-}, 7000);
-setTimeout(() => addLine('  ▸ Stack: Python 3.12, FastAPI, PostgreSQL+pgvector', 'agent'), 7500);
-setTimeout(() => addLine('  ▸ Conventions: Black (100 chars), mypy strict, async I/O', 'agent'), 8000);
-setTimeout(() => addLine('<span class="badge store">store</span> 3 coding conventions stored', 'system'), 8500);
-
-setTimeout(() => addLine('We chose pgvector over Pinecone — wanted everything self-hosted.', 'user'), 10500);
-setTimeout(() => {
-  addLine('<span class="badge decision">decision</span> Logged: pgvector over Pinecone | Rationale: self-hosted, single-DB', 'agent');
-}, 12500);
-setTimeout(() => addLine('  Alternatives considered: Pinecone, Weaviate, Qdrant', 'agent'), 13000);
-
-setTimeout(() => addLine('Architecture is microservices with Redis pub/sub between services.', 'user'), 15500);
-setTimeout(() => {
-  addLine('<span class="badge store">store</span> Architecture noted: microservices + Redis message bus', 'agent');
-}, 17500);
-
-setTimeout(() => addLine('Session 1 complete → 9 facts, 1 decision, 3 conventions stored.', 'system'), 20000);
-
-// === SESSION 2: Agent Remembers (0:38 - 1:25) ===
-setTimeout(() => {
-  addLine('', 'system');
-  addLine('═══ Session 2: The Agent Remembers ═══', 'divider');
-}, 23000);
-
-setTimeout(() => addLine('Hey — I need to add a new endpoint. What DB are we using?', 'user'), 25000);
-
-setTimeout(() => {
-  addLine('<span class="badge recall">recall</span> Searching memory: "database" + project:hermes-agent', 'system');
-}, 27000);
-setTimeout(() => addLine('  → Hybrid search: semantic + keyword across 9 facts', 'system'), 27500);
-
-setTimeout(() => {
-  addLine('You\'re using PostgreSQL with pgvector — chosen over Pinecone', 'agent');
-}, 30000);
-setTimeout(() => addLine('to keep everything self-hosted (your decision from Session 1).', 'agent'), 30500);
-setTimeout(() => addLine('Connection string is in .env. For the new endpoint, want me to', 'agent'), 31000);
-setTimeout(() => addLine('follow your conventions? (Pydantic v2, async handler, pytest-asyncio)', 'agent'), 31500);
-
-setTimeout(() => addLine('...you remembered all that? I didn\'t tell you anything this session.', 'user'), 34000);
-
-setTimeout(() => {
-  addLine('That\'s the point! I hold <span style="color:#fbbf24">9 facts, 1 decision, 3 conventions</span>', 'agent');
-}, 36000);
-setTimeout(() => addLine('about hermes-agent across sessions. No amnesia.', 'agent'), 36500);
-
-// === SESSION 3: Knowledge Compounds (1:25 - 2:10) ===
-setTimeout(() => {
-  addLine('', 'system');
-  addLine('═══ Session 3: Knowledge Compounds ═══', 'divider');
-}, 39000);
-
-setTimeout(() => addLine('We\'re getting connection pool exhaustion at ~500 concurrent users.', 'user'), 41000);
-
-setTimeout(() => {
-  addLine('<span class="badge recall">recall</span> Cross-referencing memories via reflect()...', 'system');
-}, 43000);
-setTimeout(() => addLine('  → Found 2 related issues from past sessions', 'system'), 43500);
-
-setTimeout(() => {
-  addLine('<span class="badge insight">insight</span> I\'ve noticed a pattern across sessions:', 'agent');
-}, 46000);
-setTimeout(() => addLine('  Session 1: async session management needs tuning', 'agent'), 46500);
-setTimeout(() => addLine('  Session 2: pgvector index maintenance weekly, not daily', 'agent'), 47000);
-setTimeout(() => addLine('  Now: connection pool exhaustion at 500 users', 'agent'), 47500);
-setTimeout(() => {
-  addLine('These all point to DB connection management under load.', 'agent');
-}, 49000);
-setTimeout(() => addLine('Recommendation: add pgBouncer sidecar — aligns with your', 'agent'), 49500);
-setTimeout(() => addLine('"self-hosted, single-DB" philosophy from Session 1.', 'agent'), 50000);
-
-setTimeout(() => addLine('That\'s incredible. You connected dots I hadn\'t noticed.', 'user'), 53000);
-
-// === BACKEND SWAP (2:10 - 2:40) ===
-setTimeout(() => {
-  addLine('', 'system');
-  addLine('═══ Backend Swap: Elastic → Engram-rs ═══', 'divider');
-}, 56000);
-
-setTimeout(() => addLine('$ export MEMORY_BACKEND=engram', 'system'), 58000);
-setTimeout(() => addLine('$ python -m agent.main', 'system'), 59000);
-
-setTimeout(() => {
-  addLine('Memory backend health: ok | Type: engram-rs | DB: SQLite', 'system');
-}, 61000);
-setTimeout(() => addLine('Same API. Same behavior. One config change.', 'system'), 62000);
-
-setTimeout(() => {
-  addLine('<span class="badge store">store</span> Stored: "Engram-rs is MIT licensed, self-hosted memory"', 'agent');
-}, 64000);
-setTimeout(() => {
-  addLine('<span class="badge recall">recall</span> Recall test: "memory backend" → 2 results (FTS5)', 'agent');
-}, 66000);
-
-setTimeout(() => addLine('Elastic (cloud) ↔ Engram-rs (self-hosted) — same MemoryBackend API', 'system'), 68000);
-
-// === CLOSING (2:40 - 2:55) ===
-setTimeout(() => {
-  addLine('', 'system');
-  addLine('═══════════════════════════════════════════', 'divider');
-}, 71000);
-
-setTimeout(() => {
-  addLine('Perseus Memory Agent — Persistent memory for AI agents', 'highlight');
-}, 73000);
-setTimeout(() => addLine('Google Cloud Rapid Agent Hackathon 2026 — Elastic Track', 'highlight'), 74000);
-setTimeout(() => addLine('github.com/tcconnally/perseus-rapid-agent  •  MIT Licensed', 'highlight'), 75000);
-
-// Progress bar
-const startTime = Date.now();
-setInterval(() => {
-  const elapsed = (Date.now() - startTime) / 1000;
-  const pct = Math.min(100, (elapsed / TOTAL_DURATION) * 100);
-  progress.style.width = pct + '%';
-}, 300);
+setTimeout(play, 800);
 </script>
 </body>
 </html>

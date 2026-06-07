@@ -1,27 +1,24 @@
-# Devpost Submission — Perseus Memory Agent
+# Devpost Description — perseus-cmzeu9 (Google Cloud Rapid Agent Hackathon)
 
-## Step 1: Manage Team ✅
-- **Team:** tcconnally (solo)
-
----
-
-## Step 2: Project Overview
-
-### Project Name
-```
-Perseus Memory Agent
-```
-
-### Elevator Pitch (max 200 chars)
-```
-Your AI agent shouldn't have amnesia. Perseus gives Gemini agents persistent memory across sessions — remembering your stack, decisions, and lessons. Elastic (cloud) or Engram-rs (self-hosted), same API.
-```
+Copy these sections into the Devpost form. Demo video to upload: demo/demo_video.mp4
 
 ---
 
-## Step 3: Project Details
+## Project Name
+```
+Perseus Memory Agent — Elastic Partner Track
+```
 
-### What It Does
+## Elevator Pitch (max 200 chars)
+
+```
+Your AI agent shouldn't have amnesia. Perseus gives Gemini agents persistent memory across sessions — remembering your stack, decisions, and lessons. Elastic (cloud) or Engram-rs (self-hosted, MIT), same API.
+```
+
+---
+
+## What It Does
+
 Perseus Memory Agent gives AI agents persistent, evolving memory so they remember project context across sessions. Instead of re-explaining your tech stack, conventions, and architectural decisions every time you start a new session, the agent recalls everything it learned about your project — even from weeks ago.
 
 Key capabilities:
@@ -29,54 +26,55 @@ Key capabilities:
 - **Logs decisions with rationale** — why pgvector over Pinecone? The agent remembers
 - **Compounds knowledge** — spots patterns across sessions, surfaces insights
 - **Swappable backends** — Elastic (managed cloud) or Engram-rs (self-hosted MIT), one config line
+- **Hybrid search** — ELSER semantic + BM25 keyword for accurate recall via Elastic
 
-### How I Built It
-Built with Gemini 3 Pro in Google Cloud Agent Builder, connected to Elastic Agent Builder via MCP for the memory layer:
+The demo shows 3 sessions:
+1. **Session 1** — agent learns project context from scratch
+2. **Session 2** — agent recalls prior knowledge, logs decisions with rationale
+3. **Session 3** — agent compounds everything, backend swap Elastic → Engram-rs
 
-1. **Elastic MCP tools** — Defined three tools in Elastic Agent Builder: `search_memory` (hybrid semantic + keyword), `store_memory`, `delete_memory`. These are exposed as MCP endpoints that the Gemini agent calls.
+---
 
-2. **Memory abstraction layer** — Wrote an abstract `MemoryBackend` interface in Python. Two implementations: `ElasticMemoryBackend` (uses Elasticsearch via MCP) and `EngramMemoryBackend` (uses Engram-rs CLI / SQLite). Same API surface, swap back by changing one environment variable.
+## How I Built It
 
-3. **Agent tools** — Built three MCP-callable tools: `ProjectContextTool` (manage project stack/conventions), `DecisionLogTool` (log and recall architectural decisions with rationale), `KnowledgeGraphTool` (cross-reference memories, find patterns, compound knowledge).
+Built with **Gemini 3 Pro** in **Google Cloud Agent Builder**, connected to **Elastic Agent Builder** via MCP for the memory layer:
 
-4. **Session lifecycle** — `start_session()` loads all relevant context from memory. `process_message()` enriches every prompt with recalled memories. `end_session()` reflects on new knowledge and compounds insights.
+1. **Elastic MCP tools** — Three tools in Elastic Agent Builder: `search_memory` (hybrid ELSER + BM25), `store_memory`, `delete_memory`. Exposed as MCP endpoints the Gemini agent calls directly.
 
-### Why Elastic
-Elastic Agent Builder was the natural choice because it's the only partner with a built-in **context layer for memory and insights**. The hybrid search (ELSER semantic + BM25 keyword) gives accurate recall. ES|QL enables complex memory queries without custom code. And the MCP server makes tools immediately available to Gemini.
+2. **Memory abstraction layer** — Abstract `MemoryBackend` interface in Python. Two implementations: `ElasticMemoryBackend` (Elasticsearch via MCP) and `EngramMemoryBackend` (Engram-rs CLI / SQLite). Same API surface, swap backends by changing one environment variable.
 
-### What's Next
+3. **Agent tools** — Three MCP-callable tools: `ProjectContextTool` (manage project stack/conventions), `DecisionLogTool` (log and recall architectural decisions with rationale), `KnowledgeGraphTool` (cross-reference memories, find patterns, compound knowledge).
+
+4. **Session lifecycle** — `start_session()` loads all relevant context from Elastic. `process_message()` enriches every prompt with hybrid search results. `end_session()` reflects on new knowledge and compounds insights.
+
+5. **Backend-agnostic** — The abstract interface means the same agent code works with Elastic (managed) or Engram-rs (self-hosted). Demo shows the swap live.
+
+---
+
+## Why Elastic
+
+Elastic Agent Builder was the natural choice because it's the only partner with a built-in **context layer for memory and insights**:
+
+- **Hybrid search** (ELSER semantic + BM25 keyword) gives accurate recall that pure vector search or pure keyword search can't match alone
+- **ES|QL** enables complex memory queries without custom code
+- **MCP server** makes tools immediately available to Gemini — no custom integration layer needed
+- **Elasticsearch** scales from hackathon demo to production without changing the API
+
+---
+
+## What's Next
+
 - **Multi-project awareness** — Agent recognizes cross-project patterns (e.g., "you use this same auth pattern in 3 repos")
 - **Memory confidence decay** — Facts automatically lose confidence if unverified, prompting re-verification
 - **MCP-native Engram-rs** — Direct MCP server in Engram-rs so it plugs into Agent Builder without the CLI wrapper
 
 ---
 
-## Step 4: Additional Info
+## Built With
 
-### GitHub Repository
-```
-https://github.com/tcconnally/perseus-rapid-agent
-```
-
-### Hosted Project URL
-_(fill in after deploying on Google Cloud Agent Builder)_
-
-### Demo Video
-_(upload to YouTube or attach)_
-
-### Partner Track
-**Elastic**
-
-### Open Source License
-MIT — visible in repo root and About section
-
----
-
-## Step 5: Submit ✅
-
-### Checklist
-- [ ] Public GitHub repo with MIT license at top
-- [ ] Hosted demo on Google Cloud Agent Builder
-- [ ] ~3 minute demo video
-- [ ] Elastic MCP integration demonstrated
-- [ ] All Devpost form fields completed
+- **Google Cloud Agent Builder** (Gemini 3 Pro)
+- **Elastic Cloud** (Elasticsearch, ELSER, BM25)
+- **Elastic Agent Builder** (MCP tools)
+- **Engram-rs** (Self-hosted memory, MIT, Rust + SQLite + FTS5)
+- **Python 3.12** (Pydantic, async/await)
+- **MCP** (Model Context Protocol)
