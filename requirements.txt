@@ -6,8 +6,8 @@
 pydantic>=2.0
 python-dotenv>=1.0
 
-# Elastic backend (only needed for standalone Elasticsearch access)
-# elasticsearch>=8.0
+# Elastic backend
+elasticsearch>=8.0
 
 # Async support
 anyio>=4.0
