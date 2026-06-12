@@ -187,33 +187,35 @@ def test_elastic_health_check_never_raises(elastic_backend):
     assert "error" in health
 
 
-# ── Engram demo path (stubbed CLI — no binary needed) ───────────────────────
+# ── Engram demo path (real direct-SQLite backend, tmp database) ─────────────
 
 
-def test_engram_demo_session_runs_end_to_end(monkeypatch):
-    from agent.memory.engram_memory import EngramMemoryBackend
+def test_engram_demo_session_runs_end_to_end(monkeypatch, tmp_path):
     import agent.main as main_mod
 
-    def fake_run_engram(self, args):
-        if args[0] == "store":
-            return {}
-        if args[0] == "recall":
-            return {
-                "results": [
-                    {
-                        "id": "mem-1",
-                        "data": '{"content": "Engram-rs is the memory backend", '
-                        '"category": "fact", "project": "perseus"}',
-                        "score": 1.0,
-                    }
-                ]
-            }
-        if args[0] == "health":
-            return {"entry_count": 1, "db_size_bytes": 1024}
-        return {}
-
-    monkeypatch.setattr(EngramMemoryBackend, "_run_engram", fake_run_engram)
+    monkeypatch.setenv("ENGRAM_DB_PATH", str(tmp_path / "engram-demo.db"))
     # The demo prints; we only assert it completes without raising —
     # this is the exact path that crashed with TypeError before the
-    # MemoryEntry id fix.
+    # MemoryEntry id fix. The backend is the real one: stdlib sqlite3
+    # against engram's facts schema, no binary required.
     asyncio.run(main_mod.demo_engram_session())
+
+
+def test_engram_backend_roundtrip(monkeypatch, tmp_path):
+    from agent.memory.engram_memory import EngramMemoryBackend
+
+    monkeypatch.setenv("ENGRAM_DB_PATH", str(tmp_path / "engram-test.db"))
+    backend = EngramMemoryBackend()
+
+    eid = asyncio.run(backend.remember(MemoryEntry(
+        content="pgvector handles vector search",
+        category="fact", project="demo", tags=["vector-db"],
+        confidence=0.9,
+    )))
+    results = asyncio.run(backend.recall("pgvector", project="demo"))
+    assert len(results) == 1
+    assert results[0].entry.id == eid
+    assert results[0].entry.tags == ["vector-db"]
+
+    assert asyncio.run(backend.forget(eid)) is True
+    assert asyncio.run(backend.recall("pgvector", project="demo")) == []
