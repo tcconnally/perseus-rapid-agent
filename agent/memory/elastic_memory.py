@@ -47,6 +47,13 @@ _SEMANTIC_MAPPINGS = {
     }
 }
 
+# Optional elasticsearch-py for standalone mode
+try:
+    from elasticsearch import Elasticsearch
+    _HAS_ELASTICSEARCH = True
+except ImportError:
+    _HAS_ELASTICSEARCH = False
+
 
 class ElasticMemoryBackend(MemoryBackend):
     """Memory backend storing entries in an Elasticsearch index."""
@@ -55,7 +62,6 @@ class ElasticMemoryBackend(MemoryBackend):
         self.cloud_id = os.getenv("ELASTIC_CLOUD_ID", "")
         self.api_key = os.getenv("ELASTIC_API_KEY", "")
         self.memory_index = os.getenv("ELASTIC_MEMORY_INDEX", "perseus-agent-memory")
-
         if not all([self.cloud_id, self.api_key]):
             raise ValueError(
                 "ELASTIC_CLOUD_ID and ELASTIC_API_KEY must be set. "
@@ -109,7 +115,6 @@ class ElasticMemoryBackend(MemoryBackend):
         except Exception as exc:
             self._semantic = None  # retry on next call
             raise MemoryBackendError(f"Elastic index setup failed: {exc}") from exc
-
     async def remember(self, entry: MemoryEntry) -> str:
         """Store a memory entry in Elasticsearch."""
         if not entry.id:
