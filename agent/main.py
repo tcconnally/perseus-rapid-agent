@@ -22,8 +22,8 @@ import sys
 from datetime import datetime, timezone
 
 from agent.config import AgentConfig
-from agent.memory import ElasticMemoryBackend, EngramMemoryBackend, MemoryEntry
-from agent.tools import DecisionLogTool, KnowledgeGraphTool, ProjectContextTool
+from perseus_agent_core.memory import ElasticMemoryBackend, EngramMemoryBackend, MemoryEntry
+from perseus_agent_core.tools import DecisionLogTool, KnowledgeGraphTool, ProjectContextTool
 
 
 class PerseusMemoryAgent:

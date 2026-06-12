@@ -5,7 +5,7 @@ Google Cloud Rapid Agent Hackathon 2026 — Elastic Partner Track.
 
 from agent.config import AgentConfig
 from agent.main import PerseusMemoryAgent
-from agent.memory import (
+from perseus_agent_core.memory import (
     ElasticMemoryBackend,
     EngramMemoryBackend,
     MemoryBackend,

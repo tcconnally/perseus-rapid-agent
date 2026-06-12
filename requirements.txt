@@ -11,3 +11,6 @@ elasticsearch>=8.0
 
 # Async support
 anyio>=4.0
+
+# Shared memory + tool layer (extracted from this repo and perseus-qwen-memory)
+perseus-agent-core @ git+https://github.com/tcconnally/perseus-agent-core.git

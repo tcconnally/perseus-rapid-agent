@@ -14,7 +14,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from agent.config import AgentConfig  # noqa: E402
-from agent.memory.backend import (  # noqa: E402
+from perseus_agent_core.memory.backend import (  # noqa: E402
     MemoryBackend,
     MemoryBackendError,
     MemoryEntry,
@@ -109,7 +109,7 @@ class FakeES:
 def elastic_backend(monkeypatch):
     monkeypatch.setenv("ELASTIC_CLOUD_ID", "deployment:abc123")
     monkeypatch.setenv("ELASTIC_API_KEY", "key")
-    from agent.memory.elastic_memory import ElasticMemoryBackend
+    from perseus_agent_core.memory.elastic_memory import ElasticMemoryBackend
 
     backend = ElasticMemoryBackend()
     backend._es = FakeES()
@@ -119,7 +119,7 @@ def elastic_backend(monkeypatch):
 def test_elastic_requires_credentials(monkeypatch):
     monkeypatch.delenv("ELASTIC_CLOUD_ID", raising=False)
     monkeypatch.delenv("ELASTIC_API_KEY", raising=False)
-    from agent.memory.elastic_memory import ElasticMemoryBackend
+    from perseus_agent_core.memory.elastic_memory import ElasticMemoryBackend
 
     with pytest.raises(ValueError, match="ELASTIC_CLOUD_ID"):
         ElasticMemoryBackend()
@@ -191,7 +191,7 @@ def test_elastic_health_check_never_raises(elastic_backend):
 
 
 def test_engram_demo_session_runs_end_to_end(monkeypatch):
-    from agent.memory.engram_memory import EngramMemoryBackend
+    from perseus_agent_core.memory.engram_memory import EngramMemoryBackend
     import agent.main as main_mod
 
     def fake_run_engram(self, args):
