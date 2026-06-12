@@ -47,33 +47,53 @@ class EngramMemoryBackend(MemoryBackend):
             os.path.join(data_dir, "mnemosyne.db"),
         )
 
-    def _run_engram(self, args: list[str]) -> dict:
-        """Run an engram CLI command and return parsed JSON output."""
+    def _run_engram(self, args: list[str], retries: int = 1) -> dict:
+        """Run an engram CLI command and return parsed JSON output.
+
+        Args:
+            args: CLI arguments to pass to engram
+            retries: Number of retry attempts on transient failures (timeout/lock)
+        """
         cmd = [self.engram_bin] + args
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if result.returncode != 0:
+        last_error = None
+        for attempt in range(retries + 1):
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                if result.returncode != 0:
+                    stderr = result.stderr.strip()
+                    # Retry on transient SQLite lock errors
+                    if "database is locked" in stderr.lower() and attempt < retries:
+                        import time
+                        time.sleep(2 * (attempt + 1))
+                        last_error = stderr
+                        continue
+                    return {
+                        "error": stderr,
+                        "exit_code": result.returncode,
+                    }
+                if result.stdout.strip():
+                    return json.loads(result.stdout)
+                return {}
+            except FileNotFoundError:
                 return {
-                    "error": result.stderr.strip(),
-                    "exit_code": result.returncode,
+                    "error": f"Engram binary not found: {self.engram_bin}. "
+                    f"Install with: curl -sSL https://raw.githubusercontent.com/"
+                    f"tcconnally/engram-rs/main/scripts/bootstrap.sh | bash",
+                    "exit_code": -1,
                 }
-            if result.stdout.strip():
-                return json.loads(result.stdout)
-            return {}
-        except FileNotFoundError:
-            return {
-                "error": f"Engram binary not found: {self.engram_bin}. "
-                f"Install with: curl -sSL https://raw.githubusercontent.com/"
-                f"tcconnally/engram-rs/main/scripts/bootstrap.sh | bash",
-                "exit_code": -1,
-            }
-        except subprocess.TimeoutExpired:
-            return {"error": "Engram command timed out", "exit_code": -2}
+            except subprocess.TimeoutExpired:
+                if attempt < retries:
+                    import time
+                    time.sleep(2 * (attempt + 1))
+                    last_error = "Engram command timed out"
+                    continue
+                return {"error": "Engram command timed out after retries", "exit_code": -2}
+        return {"error": last_error or "unknown error", "exit_code": -3}
 
     async def remember(self, entry: MemoryEntry) -> str:
         """Store a memory entry via engram_store.
@@ -141,11 +161,14 @@ class EngramMemoryBackend(MemoryBackend):
         result = self._run_engram(args)
 
         if "error" in result:
-            return []
+            raise RuntimeError(f"Engram recall failed: {result['error']}")
 
         results = []
         for item in result.get("results", []):
-            entry_data = json.loads(item.get("data", "{}"))
+            try:
+                entry_data = json.loads(item.get("data", "{}"))
+            except (json.JSONDecodeError, TypeError):
+                continue
             entry = MemoryEntry(
                 id=item.get("id", ""),
                 content=entry_data.get("content", item.get("content", "")),
