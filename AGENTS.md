@@ -3,7 +3,7 @@
 ## Project Identity
 - **Name:** Perseus Memory Agent
 - **Purpose:** Google Cloud Rapid Agent Hackathon 2026 submission (Elastic Partner Track)
-- **Stack:** Python 3.12, Gemini via Google Cloud Agent Builder, Elastic MCP, Engram-rs
+- **Stack:** Python 3.12, Google Cloud Agent Builder, Elastic MCP, Mimir
 - **License:** MIT
 
 ## Architecture

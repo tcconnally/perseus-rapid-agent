@@ -4,9 +4,9 @@
 >
 > *"Your agents shouldn't have amnesia."*
 
-A Gemini-powered agent that builds **persistent project context** across sessions — remembering decisions, preferences, domain knowledge, and codebase facts so developers never have to repeat themselves.
+An agent that builds **persistent project context** across sessions — remembering decisions, preferences, domain knowledge, and codebase facts so developers never have to repeat themselves.
 
-Built with **Gemini** + **Google Cloud Agent Builder** + **Elastic Agent Builder (MCP)** for the hackathon, with **Engram-rs** as the open-source, self-hosted memory alternative.
+Built for **Google Cloud Agent Builder** (+ **Elastic Agent Builder MCP**) for the hackathon, with **Mimir** as the open-source, self-hosted memory alternative.
 
 ---
 

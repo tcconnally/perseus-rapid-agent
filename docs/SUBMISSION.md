@@ -12,7 +12,7 @@ Perseus Memory Agent — Elastic Partner Track
 ## Elevator Pitch (max 200 chars)
 
 ```
-Your AI agent shouldn't have amnesia. Perseus gives Gemini agents persistent memory across sessions — remembering your stack, decisions, and lessons. Elastic (cloud) or Engram-rs (self-hosted, MIT), same API.
+Your AI agent shouldn't have amnesia. Perseus gives agents persistent memory across sessions — remembering your stack, decisions, and lessons. Elastic (cloud) or Mimir (self-hosted, MIT), same API.
 ```
 
 ---
