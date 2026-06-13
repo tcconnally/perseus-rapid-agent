@@ -238,6 +238,22 @@ async def demo_elastic_session():
     for dec in context["related_decisions"]:
         print(f"  {dec['metadata'].get('decision', dec['content'][:80])}")
 
+    # Semantic recall beat: this query shares no keywords with the stored
+    # decision ("pgvector instead of Pinecone for vector storage") — on a
+    # deployment with ELSER it matches semantically; on plain keyword
+    # search it demonstrates the graceful-degradation path.
+    semantic_hits = await agent.memory.recall(
+        query="how do we handle embeddings?",
+        project="hermes-agent",
+        limit=3,
+    )
+    print('\nSemantic recall — "how do we handle embeddings?":')
+    if semantic_hits:
+        for r in semantic_hits:
+            print(f"  [{r.score:.2f}] ({r.search_method}) {r.entry.content}")
+    else:
+        print("  (no semantic match — index is keyword-only on this deployment)")
+
     await agent.end_session()
 
     # Session 3: Agent compounds knowledge, spots patterns
