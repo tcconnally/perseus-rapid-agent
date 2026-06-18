@@ -6,6 +6,9 @@
 pydantic>=2.0
 python-dotenv>=1.0
 
+# Shared memory + tool layer (extracted from this repo and perseus-rapid-agent)
+perseus-agent-core>=0.2.0
+
 # Elastic backend
 elasticsearch>=8.0
 
